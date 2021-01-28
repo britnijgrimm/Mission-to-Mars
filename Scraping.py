@@ -17,6 +17,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemi": mars_hemi(browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -98,6 +99,67 @@ def mars_facts():
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
+
+### Mars Hemispheres
+
+def mars_hemi(browser):
+    # Visit URL
+    url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url)
+    
+    # Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+    
+    # Parse the HTML
+    html = browser.html
+    hemisphere_soup = soup(html, 'html.parser')
+
+    for t in hemisphere_soup.find_all('div', class_='description'):
+    
+    # Create Hemisphere dictionary
+    hemispheres = {}
+    
+    # Collect title
+    title = t.find('h3').string
+    
+    # Print to see if right title was grabbed
+    #print(title)
+    
+    # Href to open window with download class
+    href = t.find('a').get('href')
+    
+    # Create new browser to parse html for download class
+    # This class contains the href for the wide-image
+    new_browser = Browser('chrome', **executable_path, headless=True)
+    new_browser.visit('https://astrogeology.usgs.gov' + href)
+    
+    # Get html from new browser page
+    new_html = new_browser.html
+    
+    # Create new soup for new browser page
+    new_soup = soup(new_html, 'html.parser')
+    
+    # Get img class from new soup
+    img_class = new_soup.find('div',class_='downloads')
+    
+    # Get img url from img class
+    img_url = img_class.find('a').get('href')
+    
+    # Print to see if right url grabbed
+    #print(img_url)
+    
+    # Cache dictonary here using title and img_url variables
+    hemispheres['img_url'] = img_url
+    hemispheres['title'] = title
+    
+    # Create a copy of hemispheres dictionary
+    hemi_copy = hemispheres.copy()
+    
+    # Send copy to hemispheres list
+    hemisphere_image_urls.append(hemi_copy)
+    
+    return hemisphere_image_urls
+
 
 if __name__ == "__main__":
 
